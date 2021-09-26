@@ -42,3 +42,34 @@ while True:
     # Capture frame-by-frame
     ret, frame = cap.read()
     frame_resized = cv2.resize(frame,(300,300)) # resize frame for prediction
+
+    # MobileNet requires fixed dimensions for input image(s)
+    # so we have to ensure that it is resized to 300x300 pixels.
+    # set a scale factor to image because network the objects has differents size.
+    # We perform a mean subtraction (127.5, 127.5, 127.5) to normalize the input;
+    # after executing this command our "blob" now has the shape:
+    # (1, 3, 300, 300)
+    blob = cv2.dnn.blobFromImage(frame_resized, 0.007843, (300, 300), (127.5, 127.5, 127.5), False)
+    #Set to network the input blob
+    net.setInput(blob)
+    #Prediction of network
+    detections = net.forward()
+
+    #Size of frame resize (300x300)
+    cols = frame_resized.shape[1]
+    rows = frame_resized.shape[0]
+
+    #For get the class and location of object detected,
+    # There is a fix index for class, location and confidence
+    # value in @detections array .
+    for i in range(detections.shape[2]):
+        confidence = detections[0, 0, i, 2] #Confidence of prediction
+        if confidence > args.thr: # Filter prediction
+            class_id = int(detections[0, 0, i, 1]) # Class label
+
+            # Object location
+            xLeftBottom = int(detections[0, 0, i, 3] * cols)
+            yLeftBottom = int(detections[0, 0, i, 4] * rows)
+            xRightTop   = int(detections[0, 0, i, 5] * cols)
+            yRightTop   = int(detections[0, 0, i, 6] * rows)
+
